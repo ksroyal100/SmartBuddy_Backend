@@ -29,18 +29,16 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-   @Override
-public void register(RegisterRequest request) {
+    @Override
+    public User register(RegisterRequest request) {
 
-    User user = new User();
-    user.setUsername(request.getUsername());
-    user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("USER");
 
-    // ✅ DEFAULT ROLE
-    user.setRole("ROLE_USER");
-
-    userRepository.save(user);
-}
+        return userRepository.save(user);
+    }
 
 
     @Override
