@@ -31,32 +31,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ ENABLE CORS
+            // ✅ ENABLE CORS (FRONTEND → BACKEND)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
+            // ✅ DISABLE CSRF (JWT BASED AUTH)
             .csrf(csrf -> csrf.disable())
 
+            // ✅ STATELESS SESSION
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
+            // ✅ AUTH RULES
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        "/auth/**",
-                        "/h2-console/**"
-                ).permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
 
+            // ✅ JWT FILTER
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // ✅ H2 console fix
-        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
-    // ✅ THIS IS THE MOST IMPORTANT PART FOR FRONTEND
+    // ✅ CORS CONFIG (VERY IMPORTANT)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -83,6 +81,7 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
+    // ✅ PASSWORD ENCODER (REQUIRED FOR MYSQL USERS)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
