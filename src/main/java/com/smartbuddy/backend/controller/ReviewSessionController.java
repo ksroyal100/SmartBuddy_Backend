@@ -1,5 +1,6 @@
 package com.smartbuddy.backend.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import com.smartbuddy.backend.dto.SaveReviewRequest;
 import com.smartbuddy.backend.entity.ReviewSession;
 import com.smartbuddy.backend.entity.User;
+import com.smartbuddy.backend.repository.UserRepository;
+
+import org.springframework.http.HttpStatus;
 import com.smartbuddy.backend.service.ReviewSessionService;
 
 @RestController
@@ -16,35 +20,76 @@ import com.smartbuddy.backend.service.ReviewSessionService;
 public class ReviewSessionController {
 
     private final ReviewSessionService reviewSessionService;
+    private final UserRepository userRepository;
 
-    // ✅ MANUAL CONSTRUCTOR (NO LOMBOK)
-    public ReviewSessionController(ReviewSessionService reviewSessionService) {
-        this.reviewSessionService = reviewSessionService;
-    }
-
-    @PostMapping
-    public ResponseEntity<ReviewSession> saveReview(
-            @RequestBody SaveReviewRequest request,
-            @AuthenticationPrincipal User user
+    public ReviewSessionController(
+            ReviewSessionService reviewSessionService,
+            UserRepository userRepository
     ) {
-        ReviewSession saved = reviewSessionService.save(
-                user,
-                request.getCode(),
-                request.getReviewHtml()
-        );
-        return ResponseEntity.ok(saved);
+        this.reviewSessionService = reviewSessionService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
-    public List<ReviewSession> getAll(@AuthenticationPrincipal User user) {
-        return reviewSessionService.getAll(user);
+    public ResponseEntity<List<ReviewSession>> getAll(Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(reviewSessionService.getAll(user));
     }
 
     @GetMapping("/{id}")
-    public ReviewSession getById(
+    public ResponseEntity<ReviewSession> getById(
             @PathVariable Long id,
-            @AuthenticationPrincipal User user
+            Principal principal
     ) {
-        return reviewSessionService.getById(id, user);
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(reviewSessionService.getById(id, user));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        reviewSessionService.deleteById(id, user);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    
+    @PostMapping
+    public ResponseEntity<ReviewSession> save(
+            @RequestBody SaveReviewRequest request,
+            Principal principal
+    ) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(
+                reviewSessionService.save(user, request.getCode(), request.getReviewHtml())
+        );
     }
 }

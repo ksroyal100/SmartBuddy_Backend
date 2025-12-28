@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -29,30 +30,30 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
-            // ✅ ENABLE CORS (FRONTEND → BACKEND)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // ✅ DISABLE CSRF (JWT BASED AUTH)
+            .cors(Customizer.withDefaults()) 
             .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                // ✅ PUBLIC ENDPOINTS
+                .requestMatchers(
+                    "/auth/login",
+                    "/auth/register"
+                ).permitAll()
 
-            // ✅ STATELESS SESSION
+                // ✅ PROTECTED API
+                .requestMatchers("/api/**").authenticated()
+
+                // everything else
+                .anyRequest().authenticated()
+            )
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-
-            // ✅ AUTH RULES
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .anyRequest().authenticated()
-            )
-
-            // ✅ JWT FILTER
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     // ✅ CORS CONFIG (VERY IMPORTANT)
     @Bean
