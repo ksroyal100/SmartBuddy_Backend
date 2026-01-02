@@ -44,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (!token.isEmpty() && !token.contains(" ")) {
                 username = jwtUtil.extractUsername(token);
             }
-            System.out.println("AUTH SET FOR USER = " + username);
 
 
         }

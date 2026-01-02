@@ -17,12 +17,6 @@ public class DataInitializer {
                 role.setName("ROLE_USER");
                 roleRepository.save(role);
             }
-
-            if (roleRepository.findByName("ROLE_ADMIN").isEmpty()) {
-                Role role = new Role();
-                role.setName("ROLE_ADMIN");
-                roleRepository.save(role);
-            }
         };
     }
 }

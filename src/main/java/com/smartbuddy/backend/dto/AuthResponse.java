@@ -10,7 +10,11 @@ public class AuthResponse {
         this.username = username;
     }
 
-    public String getToken() {
+    public AuthResponse(String token2) {
+	
+	}
+
+	public String getToken() {
         return token;
     }
 
