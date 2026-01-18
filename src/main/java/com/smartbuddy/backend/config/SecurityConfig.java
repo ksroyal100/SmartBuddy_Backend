@@ -31,31 +31,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) 
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC ENDPOINTS
-                .requestMatchers(
-                    "/auth/login",
-                    "/auth/register"
-                ).permitAll()
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // PUBLIC ENDPOINTS
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/register",
+                                "/")
+                        .permitAll()
 
-                // ✅ PROTECTED API
-                .requestMatchers("/api/**").authenticated()
+                        // ✅ PROTECTED API
+                        .requestMatchers("/api/**").authenticated()
 
-                // everything else
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        // everything else
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-
-    // ✅ CORS CONFIG (VERY IMPORTANT)
+    //  CORS CONFIG (VERY IMPORTANT)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -63,13 +60,11 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of("http://localhost:3000"));
         config.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -77,12 +72,11 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration
-    ) throws Exception {
+            AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 
-    // ✅ PASSWORD ENCODER (REQUIRED FOR MYSQL USERS)
+    // PASSWORD ENCODER (REQUIRED FOR MYSQL USERS)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
