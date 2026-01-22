@@ -13,13 +13,18 @@ import java.util.Date;
 public class JwtUtil {
 
     private final Key key;
-
     private final long expiration;
 
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration}") long expiration
     ) {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException(
+                "JWT_SECRET is missing or too short (minimum 32 characters required)"
+            );
+        }
+
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
     }
@@ -43,9 +48,7 @@ public class JwtUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token)
-                .getExpiration()
-                .before(new Date());
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
