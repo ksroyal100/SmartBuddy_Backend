@@ -10,8 +10,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
+    show-sql: false
 
 jwt:
-  secret: VERY_LONG_RANDOM_SECRET_KEY
+  secret: ${JWT_SECRET}
   expiration: 86400000
