@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+
+jwt:
+  secret: VERY_LONG_RANDOM_SECRET_KEY
+  expiration: 86400000
