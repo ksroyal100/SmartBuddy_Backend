@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,25 +32,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 1️⃣ Read Authorization header
-        String authHeader = request.getHeader("Authorization");
-
-        String token = null;
-        String username = null;
-
-        // 2️⃣ Check Bearer token
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-//            username = jwtUtil.extractUsername(token);
-            if (!token.isEmpty() && !token.contains(" ")) {
-                username = jwtUtil.extractUsername(token);
-            }
-
-
+        //  Always allow CORS preflight
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // 3️⃣ Validate token & set security context
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // Read Authorization header
+        String authHeader = request.getHeader("Authorization");
+
+        //  If no token → let Spring Security handle it
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Extract token & username
+        String token = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(token);
+
+        //  Validate token & set authentication
+        if (username != null &&
+            SecurityContextHolder.getContext().getAuthentication() == null) {
 
             UserDetails userDetails =
                     userDetailsService.loadUserByUsername(username);
@@ -64,15 +68,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
 
                 authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request)
                 );
 
-                // 🔥🔥 THIS IS THE MOST IMPORTANT LINE 🔥🔥
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authentication);
             }
         }
 
-        // 4️⃣ Continue filter chain
+        // Continue filter chain
         filterChain.doFilter(request, response);
     }
 }
